@@ -5,8 +5,7 @@ let dbInstance: SQLite.SQLiteDatabase | null = null;
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (dbInstance) return dbInstance;
 
-  // mude de 'fitsync_local.db' para:
-dbInstance = await SQLite.openDatabaseAsync('fitsync_cascata.db');
+dbInstance = await SQLite.openDatabaseAsync('fitsync_mb.db');
 
   await dbInstance.execAsync(`
     PRAGMA foreign_keys = ON;
@@ -66,7 +65,7 @@ dbInstance = await SQLite.openDatabaseAsync('fitsync_cascata.db');
     );
   `);
 
-  console.log("Banco SQLite sincronizado perfeitamente!");
+  console.log("Banco SQLite criado");
   return dbInstance;
 }
 
