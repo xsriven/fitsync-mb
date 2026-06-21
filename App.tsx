@@ -4,7 +4,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { setupDatabase } from './src/services/database';
 
-// telas
 import LoginScreen from './src/screens/LoginScreen';
 import PersonalDashboardScreen from './src/screens/PersonalDashboardScreen';
 import AlunoDashboardScreen from './src/screens/AlunoDashboardScreen';

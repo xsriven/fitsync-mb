@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, Modal } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, Modal, Platform } from 'react-native';
 import { getDatabase } from '../services/database';
 import { Ionicons } from '@expo/vector-icons'; 
 import * as Print from 'expo-print';
@@ -18,31 +18,26 @@ export default function FichaScreen({ route }: any) {
   const tipoUsuario = route.params?.tipo || 'aluno';
   const alunoId = route.params?.alunoId || route.params?.usuarioId;
 
-  // estados locais da estrutura de rotinas
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [fichaSelecionada, setFichaSelecionada] = useState<Ficha | null>(null);
   const [exercicios, setExercicios] = useState<Exercicio[]>([]);
   const [totalCheckins, setTotalCheckins] = useState(0);
   
-  // modais e estados de criação/edição do personal
   const [modalCriarFicha, setModalCriarFicha] = useState(false);
   const [nomeNovaFicha, setNomeNovaFicha] = useState('');
   const [modoEdicao, setModoEdicao] = useState(false);
   
-  // estados do formulário de prescrição
   const [mostrarFormExercicio, setMostrarFormExercicio] = useState(false);
   const [pesquisaExercicio, setPesquisaExercicio] = useState('');
   const [exercicioSelecionado, setExercicioSelecionado] = useState<{nome: string, grupo: string} | null>(null);
   const [seriesPrescritas, setSeriesPrescritas] = useState('');
   const [repsPrescritas, setRepsPrescritas] = useState('');
 
-  // estados do treino em cascata do aluno
   const [treinoEmAndamento, setTreinoEmAndamento] = useState(false);
   const [tempoTreino, setTempoTreino] = useState(0);
   const [exercicioAtualIndex, setExercicioAtualIndex] = useState(0);
   const [serieAtual, setSerieAtual] = useState(1);
 
-  // estados do cronômetro de descanso
   const [mostrarDescanso, setMostrarDescanso] = useState(false);
   const [tempoDescanso, setTempoDescanso] = useState(0);
 
@@ -90,14 +85,12 @@ export default function FichaScreen({ route }: any) {
     return () => clearInterval(intervaloDescansoRef.current);
   }, [mostrarDescanso, tempoDescanso]);
 
-  // formata os segundos 
   function formatarTempo(segundos: number): string {
     const mins = Math.floor(segundos / 60);
     const segs = segundos % 60;
     return `${mins.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
   }
 
-  // cancela o intervalo de descanso e fecha o modal na tela
   function pularDescanso() {
     clearInterval(intervaloDescansoRef.current);
     setMostrarDescanso(false);
@@ -112,7 +105,7 @@ export default function FichaScreen({ route }: any) {
 
   async function carregarExercicios(id: number) {
     const database = await getDatabase();
-    const res = await database.getAllSync<Exercicio>('SELECT * FROM exercicios WHERE ficha_id = ?', [id]);
+    const res = await database.getAllAsync<Exercicio>('SELECT * FROM exercicios WHERE ficha_id = ?', [id]);
     setExercicios(res);
   }
 
@@ -129,7 +122,12 @@ export default function FichaScreen({ route }: any) {
     setNomeNovaFicha('');
     setModalCriarFicha(false);
     carregarFichas();
-    Alert.alert('Sucesso', 'Ficha criada! Toque nela para adicionar os exercícios.');
+
+    if (Platform.OS === 'web') {
+      alert('Ficha criada! Toque nela para adicionar os exercícios.');
+    } else {
+      Alert.alert('Sucesso', 'Ficha criada! Toque nela para adicionar os exercícios.');
+    }
   }
 
   async function adicionarExercicio() {
@@ -144,41 +142,52 @@ export default function FichaScreen({ route }: any) {
   }
 
   async function excluirExercicioIndividual(idExercicio: number, nomeExercicio: string) {
-    Alert.alert('Remover Exercício', `Deseja excluir "${nomeExercicio}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          const database = await getDatabase();
-          await database.runAsync('DELETE FROM exercicios WHERE id = ?', [idExercicio]);
-          carregarExercicios(fichaSelecionada!.id);
-        }
-      }
-    ]);
+    const executarExclusao = async () => {
+      const database = await getDatabase();
+      await database.runAsync('DELETE FROM exercicios WHERE id = ?', [idExercicio]);
+      carregarExercicios(fichaSelecionada!.id);
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmado = window.confirm(`Deseja excluir "${nomeExercicio}"?`);
+      if (confirmado) await executarExclusao();
+    } else {
+      Alert.alert('Remover Exercício', `Deseja excluir "${nomeExercicio}"?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: executarExclusao }
+      ]);
+    }
   }
 
   async function excluirFichaFocada() {
     if (!fichaSelecionada) return;
-    Alert.alert('Excluir Rotina', `Apagar a rotina "${fichaSelecionada.nome}" inteira?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          const database = await getDatabase();
-          await database.runAsync('DELETE FROM fichas WHERE id = ?', [fichaSelecionada.id]);
-          setFichaSelecionada(null);
-          setModoEdicao(false);
-          carregarFichas();
-        }
-      }
-    ]);
+
+    const executarExclusaoFicha = async () => {
+      const database = await getDatabase();
+      await database.runAsync('DELETE FROM fichas WHERE id = ?', [fichaSelecionada.id]);
+      setFichaSelecionada(null);
+      setModoEdicao(false);
+      carregarFichas();
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmado = window.confirm(`Apagar a rotina "${fichaSelecionada.nome}" inteira?`);
+      if (confirmado) await executarExclusaoFicha();
+    } else {
+      Alert.alert('Excluir Rotina', `Apagar a rotina "${fichaSelecionada.nome}" inteira?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: executarExclusaoFicha }
+      ]);
+    }
   }
 
   function iniciarTreino(ficha: Ficha, listaExercicios: Exercicio[]) {
     if (listaExercicios.length === 0) {
-      Alert.alert('Aviso', 'Esta rotina não possui exercícios prescritos.');
+      if (Platform.OS === 'web') {
+        alert('Esta rotina não possui exercícios prescritos.');
+      } else {
+        Alert.alert('Aviso', 'Esta rotina não possui exercícios prescritos.');
+      }
       return;
     }
     setFichaSelecionada(ficha);
@@ -200,7 +209,11 @@ export default function FichaScreen({ route }: any) {
         setSerieAtual(1);
       } else {
         setMostrarDescanso(false);
-        Alert.alert('Fim do Treino!', 'Todos os exercícios concluídos! Finalize na base da tela.');
+        if (Platform.OS === 'web') {
+          alert('Todos os exercícios concluídos! Finalize na base da tela.');
+        } else {
+          Alert.alert('Fim do Treino!', 'Todos os exercícios concluídos! Finalize na base da tela.');
+        }
       }
     }
   }
@@ -215,28 +228,82 @@ export default function FichaScreen({ route }: any) {
     setTreinoEmAndamento(false);
     setFichaSelecionada(null);
     carregarCheckins();
-    Alert.alert('Sucesso', 'Treino finalizado e check-in salvo!');
+
+    if (Platform.OS === 'web') {
+      alert('Treino finalizado e check-in salvo!');
+    } else {
+      Alert.alert('Sucesso', 'Treino finalizado e check-in salvo!');
+    }
   }
 
   async function exportarFichaPDF() {
     if (!fichaSelecionada || exercicios.length === 0) return;
+
     const linhasHtml = exercicios.map(e => `
-      <tr style="border-bottom: 1px solid #333;">
-        <td style="padding:12px; font-weight:bold; color:#FFF;">${e.nome}</td>
-        <td style="padding:12px; color:#A0AEC0;">${e.grupoMuscular}</td>
-        <td style="padding:12px; text-align:center; color:#39FF14;">${e.series}</td>
-        <td style="padding:12px; text-align:center; color:#FFF;">${e.repeticoes}</td>
+      <tr style="border-bottom: 1px solid #DDDDDD;">
+        <td style="padding: 12px; font-weight: bold; color: #000000; text-align: left;">${e.nome}</td>
+        <td style="padding: 12px; color: #444444; text-align: left;">${e.grupoMuscular}</td>
+        <td style="padding: 12px; text-align: center; font-weight: bold; color: #000000;">${e.series}</td>
+        <td style="padding: 12px; text-align: center; color: #444444;">${e.repeticoes}</td>
       </tr>
     `).join('');
 
-    const codigoHtml = `<html><body style="font-family:sans-serif; background-color:#1A1A1A; color:#FFF; padding:30px;">
-      <h1 style="color:#39FF14;">FITSYNC MANAGEMENT</h1><p>Rotina: ${fichaSelecionada.nome}</p>
-      <table style="width:100%; border-collapse:collapse; background-color:#262626;">
-        <thead><tr style="background-color:#333;"><th style="padding:12px;color:#39FF14;">EXERCÍCIO</th><th style="padding:12px;color:#39FF14;">GRUPO</th><th style="padding:12px;text-align:center;color:#39FF14;">SÉRIES</th><th style="padding:12px;text-align:center;color:#39FF14;">REPS</th></tr></thead>
-        <tbody>${linhasHtml}</tbody>
-      </table></body></html>`;
+    const codigoHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Ficha de Treino - ${fichaSelecionada.nome}</title>
+          <style>
+            body { font-family: sans-serif; background-color: #FFFFFF; color: #000000; padding: 20px; margin: 0; }
+            .header { border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px; }
+            .title { color: #000000; margin: 0; font-size: 24px; font-weight: bold; }
+            .subtitle { color: #555555; margin: 5px 0 0 0; font-size: 14px; font-weight: bold; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; background-color: #FFFFFF; }
+            th { padding: 12px; background-color: #F5F5F5; border-bottom: 2px solid #000000; color: #000000; font-size: 12px; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="title">FITSYNC</h1>
+            <p class="subtitle">Rotina: ${fichaSelecionada.nome}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align: left;">EXERCÍCIO</th>
+                <th style="text-align: left;">GRUPO</th>
+                <th style="text-align: center;">SÉRIES</th>
+                <th style="text-align: center;">REPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linhasHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
 
-    try { await Print.printAsync({ html: codigoHtml }); } catch (e) { console.error(e); }
+    if (Platform.OS === 'web') {
+      const janelaImpressao = window.open('', '_blank');
+      if (janelaImpressao) {
+        janelaImpressao.document.write(codigoHtml.trim());
+        janelaImpressao.document.close();
+        
+
+        setTimeout(() => {
+          janelaImpressao.print();
+        }, 500);
+      }
+    } else {
+
+      try { 
+        await Print.printAsync({ html: codigoHtml.trim() }); 
+      } catch (e) { 
+        console.error(e); 
+      }
+    }
   }
 
   return (
@@ -255,7 +322,6 @@ export default function FichaScreen({ route }: any) {
         </TouchableOpacity>
       )}
 
-      {/* visão principal: lista de cards de rotinas no mural */}
       {!fichaSelecionada && !treinoEmAndamento && (
         <FlatList 
           data={fichas}
@@ -284,7 +350,6 @@ export default function FichaScreen({ route }: any) {
             <Text style={styles.txtNomeFichaAtiva}>{fichaSelecionada.nome.toUpperCase()}</Text>
           </View>
 
-          {/* menu de ações do personal dentro do card */}
           {tipoUsuario === 'personal' && (
             <View style={{ flexDirection: 'row', marginBottom: 15 }}>
               {!modoEdicao ? (
@@ -430,7 +495,7 @@ export default function FichaScreen({ route }: any) {
             
             <View style={{ flexDirection: 'row', marginTop: 10 }}>
               <TouchableOpacity style={[styles.btnModalAcao, { backgroundColor: '#39FF14', flex: 1, marginRight: 8 }]} onPress={criarNovaFicha}>
-                <Text style={styles.txtBtnModalAcao}>SALVAR CARD</Text>
+                <Text style={styles.txtBadge}>SALVAR CARD</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.btnModalAcao, { backgroundColor: '#444', width: 100 }]} onPress={() => { setModalCriarFicha(false); setNomeNovaFicha(''); }}>
                 <Text style={[styles.txtBtnModalAcao, { color: '#FFF' }]}>VOLTAR</Text>
@@ -510,6 +575,7 @@ const styles = StyleSheet.create({
   cardModal: { backgroundColor: '#262626', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#333', alignItems: 'center' },
   tituloModal: { color: '#39FF14', fontSize: 13, fontWeight: '900', marginBottom: 15, letterSpacing: 0.5 },
   btnModalAcao: { height: 44, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  txtBadge: { color: '#000', fontWeight: '900', fontSize: 12, letterSpacing: 0.5 },
   txtBtnModalAcao: { color: '#000', fontWeight: '900', fontSize: 12, letterSpacing: 0.5 },
   fundoModalDescanso: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
   cardModalDescanso: { backgroundColor: '#262626', padding: 25, borderRadius: 16, alignItems: 'center', width: '80%', borderWidth: 1, borderColor: '#333' },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, FlatList, TextInput, 
-  TouchableOpacity, Alert, ActivityIndicator, ScrollView 
+  TouchableOpacity, Alert, ActivityIndicator, ScrollView, Platform 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getDatabase } from '../services/database';
@@ -30,11 +30,9 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
   const [emailVerificado, setEmailVerificado] = useState(auth.currentUser?.emailVerified || false);
   const [enviandoEmail, setEnviandoEmail] = useState(false);
 
-  const [abaAtiva, setAbaAtiva] = useState<'all' | 'cadastro' | 'perfil'>('all');
   const [abaAtivaInterna, setAbaAtivaInterna] = useState<'lista' | 'cadastro' | 'perfil'>('lista');
   const [etapaCadastro, setEtapaCadastro] = useState<1 | 2>(1);
 
-  // form
   const [nome, setNome] = useState('');
   const [dataNascimento, setDataNascimento] = useState('');
   const [historicoLesao, setHistoricoLesao] = useState('');
@@ -71,11 +69,13 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
 
   async function handleSalvarAluno() {
     if (!email || !senha) {
-      Alert.alert('Erro', 'Informe o e-mail e a senha de acesso.');
+      if (Platform.OS === 'web') alert('Informe o e-mail e a senha de acesso.');
+      else Alert.alert('Erro', 'Informe o e-mail e a senha de acesso.');
       return;
     }
     if (senha.length < 8) {
-      Alert.alert('Erro', 'A senha deve conter no mínimo 8 caracteres.');
+      if (Platform.OS === 'web') alert('A senha deve conter no mínimo 8 caracteres.');
+      else Alert.alert('Erro', 'A senha deve conter no mínimo 8 caracteres.');
       return;
     }
 
@@ -90,12 +90,16 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
         [alunoUID, personalId, nome.trim(), email.trim(), dataNascimento.trim(), objetivo.trim(), historicoLesao.trim()]
       );
 
-      Alert.alert('Sucesso', 'Aluno matriculado e sincronizado!');
+      if (Platform.OS === 'web') alert('Aluno matriculado!');
+      else Alert.alert('Sucesso', 'Aluno matriculado!');
+      
       resetForm();
       setAbaAtivaInterna('lista');
     } catch (error: any) {
       console.error(error);
-      Alert.alert('Erro', error.code === 'auth/email-already-in-use' ? 'E-mail já cadastrado.' : 'Erro ao cadastrar.');
+      const msg = error.code === 'auth/email-already-in-use' ? 'E-mail já cadastrado.' : 'Erro ao cadastrar.';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Erro', msg);
     } finally {
       setLoading(false);
     }
@@ -106,7 +110,8 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
       await signOut(auth);
       navigation.replace('Login');
     } catch (e) {
-      Alert.alert('Erro', 'Não foi possível desconectar.');
+      if (Platform.OS === 'web') alert('Não foi possível desconectar.');
+      else Alert.alert('Erro', 'Não foi possível desconectar.');
     }
   }
 
@@ -115,38 +120,56 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
     setEnviandoEmail(true);
     try {
       await sendEmailVerification(auth.currentUser);
-      Alert.alert('Sucesso', 'E-mail de verificação enviado! Verifique sua caixa de entrada.');
+      if (Platform.OS === 'web') alert('E-mail de verificação enviado! Verifique sua caixa de entrada.');
+      else Alert.alert('Sucesso', 'E-mail de verificação enviado! Verifique sua caixa de entrada.');
     } catch (error: any) {
       console.error(error);
-      Alert.alert('Erro', 'Não foi possível disparar o e-mail.');
+      if (Platform.OS === 'web') alert('Não foi possível disparar o e-mail.');
+      else Alert.alert('Erro', 'Não foi possível disparar o e-mail.');
     } finally {
       setEnviandoEmail(false);
     }
   }
 
   async function handleDesativarAluno(idAluno: string) {
-    Alert.alert('Remover Aluno', 'Deseja desativar este aluno?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Desativar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const database = await getDatabase();
-            await database.runAsync('UPDATE alunos SET status = 0 WHERE id = ?', [idAluno]);
-            carregarAlunos();
-          } catch (e) {
-            Alert.alert('Erro', 'Erro ao desativar.');
-          }
-        }
+    const executarDesativacao = async () => {
+      try {
+        const database = await getDatabase();
+        await database.runAsync('UPDATE alunos SET status = 0 WHERE id = ?', [idAluno]);
+        carregarAlunos();
+      } catch (e) {
+        if (Platform.OS === 'web') alert('Erro ao desativar.');
+        else Alert.alert('Erro', 'Erro ao desativar.');
       }
-    ]);
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmado = window.confirm('Deseja desativar este aluno?');
+      if (confirmado) await executarDesativacao();
+    } else {
+      Alert.alert('Remover Aluno', 'Deseja desativar este aluno?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Desativar', style: 'destructive', onPress: executarDesativacao }
+      ]);
+    }
   }
 
   function resetForm() {
     setNome(''); setDataNascimento(''); setHistoricoLesao(''); setObjetivo(''); setEmail(''); setSenha('');
     setEtapaCadastro(1);
   }
+
+  function aplicarMascaraData(texto: string): string {
+  const apenasNumeros = texto.replace(/\D/g, '');
+  const numerosLimitados = apenasNumeros.slice(0, 8);
+  if (numerosLimitados.length <= 2) {
+    return numerosLimitados;
+  }
+  if (numerosLimitados.length <= 4) {
+    return `${numerosLimitados.slice(0, 2)}/${numerosLimitados.slice(2)}`;
+  }
+  return `${numerosLimitados.slice(0, 2)}/${numerosLimitados.slice(2, 4)}/${numerosLimitados.slice(4)}`;
+}
 
   return (
     <View style={styles.container}>
@@ -166,16 +189,18 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
                   <View style={styles.cardAluno}>
                     <View style={styles.linhaPrincipalCard}>
                       
-                      {/* bloco de textos e infos gerais à esquerda */}
-                      <View style={{ flex: 1, paddingRight: 10 }}>
+                       <View style={{ flex: 1, paddingRight: 10 }}>
                         <Text style={styles.nomeAluno} numberOfLines={1}>{item.nome}</Text>
                         <Text style={styles.emailAluno} numberOfLines={1}>{item.email}</Text>
                         
-                        {/* correção: renderiza a data em uma linha própria abaixo do e-mail */}
                         {item.data_nascimento ? (
                           <View style={styles.linhaDataNascimentoCard}>
                             <Ionicons name="calendar-outline" size={12} color="#777" style={{ marginRight: 4 }} />
-                            <Text style={styles.txtDataNascimentoCard}>{item.data_nascimento}</Text>
+                            <Text style={styles.txtDataNascimentoCard}>
+                              {typeof item.data_nascimento === 'string' && item.data_nascimento.includes('-')
+                                ? new Date(item.data_nascimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+                                : item.data_nascimento}
+                            </Text>
                           </View>
                         ) : null}
                       </View>
@@ -217,10 +242,17 @@ export default function PersonalDashboardScreen({ route, navigation }: any) {
               {etapaCadastro === 1 ? (
                 <View>
                   <TextInput style={styles.input} placeholder="Nome Completo do Aluno" placeholderTextColor="#666" value={nome} onChangeText={setNome} />
-                  <TextInput style={styles.input} placeholder="Nascimento (DD/MM/AAAA)" placeholderTextColor="#666" value={dataNascimento} onChangeText={setDataNascimento} />
+                  <TextInput style={styles.input} placeholder="Data de Nascimento (DD/MM/AAAA)" placeholderTextColor="#666" keyboardType="numeric"maxLength={10} value={dataNascimento} onChangeText={(texto) => setDataNascimento(aplicarMascaraData(texto))} />
                   <TextInput style={styles.input} placeholder="Objetivo de Treino" placeholderTextColor="#666" value={objetivo} onChangeText={setObjetivo} />
                   <TextInput style={[styles.input, { height: 65, textAlignVertical: 'top' }]} placeholder="Histórico Clínico ou Lesões" placeholderTextColor="#666" multiline value={historicoLesao} onChangeText={setHistoricoLesao} />
-                  <TouchableOpacity style={styles.btnAcao} onPress={() => nome.trim() ? setEtapaCadastro(2) : Alert.alert('Aviso', 'Preencha o nome.')}>
+                  <TouchableOpacity style={styles.btnAcao} onPress={() => {
+                    if (nome.trim()) {
+                      setEtapaCadastro(2);
+                    } else {
+                      if (Platform.OS === 'web') alert('Preencha o nome.');
+                      else Alert.alert('Aviso', 'Preencha o nome.');
+                    }
+                  }}>
                     <Text style={styles.btnAcaoTexto}>AVANÇAR</Text>
                   </TouchableOpacity>
                 </View>

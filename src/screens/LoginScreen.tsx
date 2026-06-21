@@ -52,7 +52,7 @@ export default function LoginScreen({ navigation }: any) {
       }
 
       if (usuarioLocal) {
-        setMensagemSucesso(`Acesso autorizado!`);
+        setMensagemSucesso(`Autenticado com sucesso!`);
         setTimeout(() => {
           if (tipoUsuario === 'personal') {
             navigation.replace('HomePersonal', { tipo: tipoUsuario, usuarioId: firebaseUID, nome: usuarioLocal.nome });
@@ -61,7 +61,7 @@ export default function LoginScreen({ navigation }: any) {
           }
         }, 1000);
       } else {
-        setMensagemErro('Perfil não encontrado localmente.');
+        setMensagemErro('Perfil não encontrado.');
       }
     } catch (error: any) {
       console.error(error);

@@ -85,7 +85,6 @@ export default function AlunoDashboardScreen({ route, navigation }: any) {
     }
   }
 
-  // nova função: puxa as fichas criadas para listar direto na aba
   async function carregarFichasDireto() {
     setLoading(true);
     try {
