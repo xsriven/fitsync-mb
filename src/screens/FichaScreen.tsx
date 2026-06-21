@@ -242,7 +242,6 @@ export default function FichaScreen({ route }: any) {
   return (
     <View style={styles.container}>
       
-      {/* topo: constância do aluno ou barra de criação do personal */}
       {tipoUsuario === 'aluno' && !treinoEmAndamento && (
         <View style={styles.painelFrequencia}>
           <Text style={styles.txtFrequencia}>SUA CONSTÂNCIA: {totalCheckins} TREINOS CONCLUÍDOS</Text>
@@ -274,7 +273,6 @@ export default function FichaScreen({ route }: any) {
         />
       )}
 
-      {/* visão detalhada do card selecionado */}
       {fichaSelecionada && !treinoEmAndamento && (
         <View style={{ flex: 1 }}>
           
@@ -378,7 +376,6 @@ export default function FichaScreen({ route }: any) {
         </View>
       )}
 
-      {/* interface de execução em cascata ativa */}
       {treinoEmAndamento && (
         <View style={{ flex: 1 }}>
           <View style={styles.painelCronometroFixo}>
@@ -425,7 +422,6 @@ export default function FichaScreen({ route }: any) {
         </View>
       )}
 
-      {/* modal: criação simplificada do card */}
       <Modal transparent visible={modalCriarFicha} animationType="slide">
         <View style={styles.fundoModal}>
           <View style={styles.cardModal}>
@@ -444,7 +440,6 @@ export default function FichaScreen({ route }: any) {
         </View>
       </Modal>
 
-      {/* modal de descanso */}
       <Modal transparent visible={mostrarDescanso} animationType="fade">
         <View style={styles.fundoModalDescanso}>
           <View style={styles.cardModalDescanso}>

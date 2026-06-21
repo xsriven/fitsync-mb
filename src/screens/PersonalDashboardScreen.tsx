@@ -317,7 +317,6 @@ const styles = StyleSheet.create({
   nomeAluno: { fontSize: 15, fontWeight: 'bold', color: '#FFF' },
   emailAluno: { fontSize: 11, color: '#A0AEC0', marginTop: 3 },
   
-  // estilos corrigidos para a quebra de linha da data
   linhaDataNascimentoCard: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   txtDataNascimentoCard: { fontSize: 11, color: '#777', fontWeight: 'bold' },
 

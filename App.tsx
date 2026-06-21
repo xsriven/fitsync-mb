@@ -24,7 +24,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   
   useEffect(() => {
-    // inicia o banco de dados e cria as tabelas
     setupDatabase();
   }, []);
 

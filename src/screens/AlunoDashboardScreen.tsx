@@ -173,7 +173,6 @@ export default function AlunoDashboardScreen({ route, navigation }: any) {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         
-        {/* aba 1: inicio */}
         {abaAtiva === 'inicio' && (
           <View style={{ width: '100%' }}>
             <View style={styles.boasVindasContainer}>
@@ -205,7 +204,6 @@ export default function AlunoDashboardScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {/* aba 2: treinos - lista direta de cards sem intermediários */}
         {abaAtiva === 'treinos' && (
           <View style={{ width: '100%' }}>
             <Text style={styles.tituloSecao}>SUAS ROTINAS DE TREINO</Text>
@@ -237,7 +235,6 @@ export default function AlunoDashboardScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {/* aba 3: evolução */}
         {abaAtiva === 'evolucao' && (
           <View style={{ width: '100%' }}>
             <Text style={styles.tituloSecao}>EVOLUÇÃO CORPORAL E IMC</Text>
@@ -323,7 +320,6 @@ export default function AlunoDashboardScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {/* aba 4: perfil */}
         {abaAtiva === 'perfil' && (
           <View style={styles.containerPerfil}>
             <View style={styles.cardPerfilCentral}>
@@ -384,7 +380,6 @@ const styles = StyleSheet.create({
   
   calendarioContainer: { backgroundColor: '#262626', borderRadius: 14, padding: 8, borderWidth: 1, borderColor: '#333', overflow: 'hidden', width: '100%' },
 
-  // novos estilos do card de treino direto listado na aba
   cardTreinoDireto: { backgroundColor: '#262626', width: '100%', padding: 18, borderRadius: 14, borderWidth: 1, borderColor: '#333', marginBottom: 10 },
   linhaTreinoDireto: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   containerTextoTreino: { flex: 1, paddingRight: 10 },

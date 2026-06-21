@@ -1,5 +1,5 @@
 export interface Personal {
-  id: string; // UID do Firebase Auth
+  id: string; 
   nome: string;
   email: string;
 }
@@ -9,7 +9,7 @@ export interface Aluno {
   personal_id: string;
   nome: string;
   email: string;
-  status: number; // 1 para Ativo, 0 para Desativado
+  status: number;
 }
 
 export interface FichaTreino {

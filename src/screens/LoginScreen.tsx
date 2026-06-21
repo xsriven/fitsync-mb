@@ -91,7 +91,6 @@ export default function LoginScreen({ navigation }: any) {
       const firebaseUID = userCredential.user.uid;
 
       const database = await getDatabase();
-      // Retornou para o formato original sem o crm
       await database.runAsync(
         'INSERT INTO personais (id, nome, email) VALUES (?, ?, ?)', 
         [firebaseUID, nome, email]
