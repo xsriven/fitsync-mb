@@ -1,4 +1,3 @@
-// src/screens/FichaScreen.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, Modal } from 'react-native';
 import { getDatabase } from '../services/database';
@@ -91,7 +90,7 @@ export default function FichaScreen({ route }: any) {
     return () => clearInterval(intervaloDescansoRef.current);
   }, [mostrarDescanso, tempoDescanso]);
 
-  // formata os segundos em formato mm:ss de relogio digital
+  // formata os segundos 
   function formatarTempo(segundos: number): string {
     const mins = Math.floor(segundos / 60);
     const segs = segundos % 60;

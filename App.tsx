@@ -1,18 +1,16 @@
-// App.tsx
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { setupDatabase } from './src/services/database';
 
-// Importação das telas do seu projeto
+// telas
 import LoginScreen from './src/screens/LoginScreen';
 import PersonalDashboardScreen from './src/screens/PersonalDashboardScreen';
 import AlunoDashboardScreen from './src/screens/AlunoDashboardScreen';
 import FichaScreen from './src/screens/FichaScreen';
 import ImcScreen from './src/screens/ImcScreen';
 
-// Definição dos tipos de parâmetros para as rotas do TypeScript
 export type RootStackParamList = {
   Login: undefined;
   HomePersonal: { tipo: string; usuarioId: string; nome: string };
@@ -21,13 +19,12 @@ export type RootStackParamList = {
   IMC: { usuarioId: string };
 };
 
-// Instanciando o criador de rotas nativo
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   
   useEffect(() => {
-    // inicia o banco de dados e cria as tabelas necessárias
+    // inicia o banco de dados e cria as tabelas
     setupDatabase();
   }, []);
 

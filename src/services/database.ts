@@ -1,4 +1,3 @@
-// src/services/database.ts
 import * as SQLite from 'expo-sqlite';
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;

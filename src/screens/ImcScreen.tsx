@@ -1,4 +1,3 @@
-// src/screens/ImcScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
